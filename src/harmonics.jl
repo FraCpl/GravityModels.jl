@@ -142,16 +142,16 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
 
     # compute polar coordinates
     x, y, z = pos
-    rho2 = x*x + y*y
-    r2   = rho2 + z*z
-    r    = sqrt(r2)
-    rho  = sqrt(rho2)
-    t    = z/r      # cos(theta), where theta is the polar angle
-    u    = rho/r    # sin(theta), where theta is the polar angle
-    tOu = z/max(rho, eps(T))
+    ρ2 = x*x + y*y
+    r2 = ρ2 + z*z
+    r = sqrt(r2)
+    ρ = sqrt(ρ2)
+    t = z/r         # cos(theta), where theta is the polar angle
+    u = ρ/r         # sin(theta), where theta is the polar angle
+    tOu = z/max(ρ, eps(T))
 
     createDistancePowersArray!(GH, GH.Rref/r)   # compute distance powers
-    createCosSinArrays!(GH, x/rho, y/rho)       # compute longitude cosines/sines
+    createCosSinArrays!(GH, x/ρ, y/ρ)       # compute longitude cosines/sines
 
     # outer summation over order
     index = 1
@@ -162,7 +162,7 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
     fill!(GH.pnm0Plus1, 0.0)
     fill!(GH.pnm0Plus2, 0.0)
     pnm0 = GH.pnm0; pnm1 = GH.pnm1; pnm0Plus1 = GH.pnm0Plus1; pnm0Plus2 = GH.pnm0Plus2
-    @inbounds for m = GH.order:-1:0
+    @inbounds for m in GH.order:-1:0
 
         # compute tesseral terms with derivatives
         index = computeTesseral!(GH, m, index, t, u, tOu, pnm0, pnm1, pnm0Plus1, pnm0Plus2)
@@ -175,7 +175,7 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
             dSumDegreeSdTheta = 0.0;         dSumDegreeCdTheta = 0.0
             mp1 = m + 1
 
-            @inbounds for n = max(2,m):GH.order # CAUTION: does this work for 1,1?
+            @inbounds for n in max(2, m):GH.order # CAUTION: does this work for 1,1?
                 np1 = n + 1
                 qSnm = GH.aOrN[np1]*GH.S[np1, mp1]
                 qCnm = GH.aOrN[np1]*GH.C[np1, mp1]
@@ -219,15 +219,15 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
 
     # Convert Gradient from Spherical to Cartesian Coordinates
     rI = x/r; rJ = y/r
-    coeff11 = GH.μ/(r2*r)*GH.C[1, 1]
-    GH.T[1, 1] = rI;   GH.T[1, 2] = -rI*t/rho;   GH.T[1, 3] = -rJ*r/rho2
-    GH.T[2, 1] = rJ;   GH.T[2, 2] = -rJ*t/rho;   GH.T[2, 3] = rI*r/rho2
-    GH.T[3, 1] = t;    GH.T[3, 2] = rho/r2;
+    coeff11 = -GH.μ/(r2*r)*GH.C[1, 1]
+    GH.T[1, 1] = rI;   GH.T[1, 2] = -rI*t/ρ;   GH.T[1, 3] = -rJ*r/ρ2
+    GH.T[2, 1] = rJ;   GH.T[2, 2] = -rJ*t/ρ;   GH.T[2, 3] = rI*r/ρ2
+    GH.T[3, 1] = t;    GH.T[3, 2] = ρ/r2
     mul!(g, GH.T, GH.dU)
 
     # Add 2-body term (C(1,1) added for compatibility with magnetic field model)
     @inbounds for k in eachindex(g);
-        g[k] -= coeff11*pos[k];
+        g[k] += coeff11*pos[k];
     end
     return
 end
@@ -238,7 +238,7 @@ function computeTesseral!(GH::GravityHarmonics, m, index, t, u, tOu, pnm0, pnm1,
 
     # initialize recursion from sectorial terms
     n = nmax
-    if (n == m)
+    if n == m
         @inbounds pnm0[n+1] = GH.sectorial[n+1]
         n += 1
     end
@@ -254,7 +254,7 @@ function computeTesseral!(GH::GravityHarmonics, m, index, t, u, tOu, pnm0, pnm1,
 
     # initialize recursion from sectorial terms
     n = nmax
-    if (n == m)
+    if n == m
         @inbounds pnm1[n+1] = m*tOu*pnm0[n+1]
         n += 1
     end
@@ -278,7 +278,7 @@ end
         @inbounds for n in 2:GH.order
             p = fld(n, 2) + 1
             q = n - p + 2
-            GH.aOrN[n+1] = GH.aOrN[p]*GH.aOrN[q];
+            GH.aOrN[n+1] = GH.aOrN[p]*GH.aOrN[q]
         end
     end
     return
@@ -288,7 +288,7 @@ end
 @inline function createCosSinArrays!(GH::GravityHarmonics, cosLambda, sinLambda)
 
     # Initialize arrays
-    if (GH.order > 0)
+    if GH.order > 0
         GH.cosλ[2] = cosLambda
         GH.sinλ[2] = sinLambda
 

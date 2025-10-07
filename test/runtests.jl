@@ -7,7 +7,7 @@ function TEST_gravity()
     # Ground truth data come from: https://icgem.gfz-potsdam.de/calcgrid
     # Functional selection: gravitation_ell, WGS84 reference system, 100x100 order/degree
     data = readdlm(dirname(pathof(GravityModels))[1:end-3]*"test\\gravity_earth_EGM2008_100x100.gdf", skipstart=34)
-    GM = GravityModel(dirname(pathof(GravityModels))[1:end-3]*"data\\earth\\EGM2008.gfc")
+    GM = GravityModel(GravityModels.EGM2008)
 
     errPerc = -1.0; pos = zeros(3); grav = zeros(3)
     for r in eachrow(data)

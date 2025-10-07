@@ -2,8 +2,8 @@ using GravityModels
 using LinearAlgebra
 using GLMakie
 
-GM = GravityModel(dirname(pathof(GravityModels))[1:end-3]*"data\\moon\\GL0660B.gfc", order=60)
-# GM = GravityModel(dirname(pathof(GravityModels))[1:end-3]*"data\\earth\\EGM2008.gfc", order=60)
+GM = GravityModel(GravityModels.GL0660B, order=60)
+# GM = GravityModel(GravityModels.EGM2008, order=60)
 
 # GM.C[1, 1] = 0.0    # No μ
 # GM.C[3, 1] = 0.0    # No J2
