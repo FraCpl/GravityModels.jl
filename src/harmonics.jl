@@ -132,13 +132,13 @@ end
 #function gravityField(body::CelestialObject,pos_X::Vector,et,frameX::String)
 #    return gravityField(body.gravityField,pos_X,et,frameX,body.bodyFrame)
 #end
-function gravity(GH::GravityHarmonics, pos::Vector{T}) where T
-    g = Vector{T}(undef, 3)
+function gravity(GH::GravityHarmonics, pos::AbstractVector{T}) where T
+    g = zero(pos)
     gravity!(GH, pos, g)
     return g
 end
 
-function gravity!(GH::GravityHarmonics, pos::Vector{T}, g::Vector{T}) where T
+function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVector{T}) where T
 
     # compute polar coordinates
     x, y, z = pos

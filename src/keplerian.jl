@@ -8,21 +8,22 @@ function GravityModel(μ::Real)
     return GravityKeplerian(μ)
 end
 
-@inline function gravity!(μ::T, pos::Vector{T}, g::Vector{T}) where T
+@inline function gravity!(μ::T, pos::AbstractVector{T}, g::AbstractVector{T}) where T
     x, y, z = pos
-    r = sqrt(x*x + y*y + z*z)
-    c = -μ/(r*r*r)
+    r2 = x*x + y*y + z*z
+    r3 = r2*sqrt(r2)
+    c = -μ/r3
     g[1] = c*x; g[2] = c*y; g[3] = c*z
     return
 end
 
-@inline function gravity!(GH::GravityKeplerian, pos::Vector{T}, g::Vector{T}) where T
+@inline function gravity!(GH::GravityKeplerian, pos::AbstractVector{T}, g::AbstractVector{T}) where T
     gravity!(GH.μ, pos, g)
     return
 end
 
-@inline function gravity(GH::GravityKeplerian, pos::Vector{T}) where T
-    g = Vector{T}(undef, 3)
+@inline function gravity(GH::GravityKeplerian, pos::AbstractVector{T}) where T
+    g = zero(pos)
     gravity!(GH.μ, pos, g)
     return g
 end
