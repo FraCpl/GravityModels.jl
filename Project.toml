@@ -3,7 +3,11 @@ uuid = "60abafe5-ad85-47ba-b5ed-19ac8c067acb"
 authors = ["F. Capolupo"]
 version = "0.1.0"
 
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
 [compat]
+LinearAlgebra = "1.11.0"
 julia = "1.10"
 
 [extras]
