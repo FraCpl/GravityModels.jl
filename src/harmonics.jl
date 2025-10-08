@@ -101,20 +101,17 @@ end
 
 @inline scalb(x, n) = x*(2^n)
 
-#gravityFieldMatlab
+#  gravity(GH, pos)
 #  This function computes the gravitational acceleration of a gravitational
 #  potential developed in spherical harmonics. This function is much faster
 #  than the equivalent one in STAR, and robust to very high order/degree.
 #
-#  USAGE:
-#  acc = gravityFieldMatlab(GH,pos)
-#
 #  INPUTS:
-#  GH                           Gravity Harmonics data structure (to be obtained with readGHdata.m)
-#  pos       [m]        [3x1]   Position of the vehicle in planet fixed reference frame
+#  GH               Gravity Harmonics data structure (to be obtained with GravityModel(...))
+#  pos  [m]         Position of the vehicle in planet centered, planet fixed reference frame
 #
 #  OUTPUTS:
-#  acc       [m/s^2]    [3x1]   Gravity acceleration in planet fixed reference frame
+#  acc  [m/s^2]     Gravity acceleration vector in planet fixed reference frame
 #
 # Reference:
 # [1] S. A. Holmes, W. E. Featherstone, A unified approach to the Clenshaw
@@ -122,16 +119,8 @@ end
 # normalised associated Legendre functions. Journal of Geodesy (2002) 76:
 # 279–299. DOI 10.1007/s00190-002-0216-2.
 #
-# Taken from OREKIT
+# Adapted from OREKIT
 #
-
-#function gravityField(body::CelestialObject,pos::Vector)
-#    return gravityField(body.gravityField,pos)
-#end
-
-#function gravityField(body::CelestialObject,pos_X::Vector,et,frameX::String)
-#    return gravityField(body.gravityField,pos_X,et,frameX,body.bodyFrame)
-#end
 function gravity(GH::GravityHarmonics, pos::AbstractVector{T}) where T
     g = zero(pos)
     gravity!(GH, pos, g)
@@ -140,7 +129,7 @@ end
 
 function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVector{T}) where T
 
-    # compute polar coordinates
+    # Compute polar coordinates
     x, y, z = pos
     ρ2 = x*x + y*y
     r2 = ρ2 + z*z
@@ -151,7 +140,7 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
     tOu = z/max(ρ, eps(T))
 
     createDistancePowersArray!(GH, GH.Rref/r)   # compute distance powers
-    createCosSinArrays!(GH, x/ρ, y/ρ)       # compute longitude cosines/sines
+    createCosSinArrays!(GH, x/ρ, y/ρ)           # compute longitude cosines/sines
 
     # outer summation over order
     index = 1
@@ -170,9 +159,9 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
         if m ≤ GH.order
             # compute contribution of current order to field (equation 5 of the paper)
             # inner summation over degree, for fixed order
-            sumDegreeS        = 0.0;         sumDegreeC        = 0.0
-            dSumDegreeSdR     = 0.0;         dSumDegreeCdR     = 0.0
-            dSumDegreeSdTheta = 0.0;         dSumDegreeCdTheta = 0.0
+            sumDegreeS = 0.0;        sumDegreeC = 0.0
+            dSumDegreeSdR = 0.0;     dSumDegreeCdR = 0.0
+            dSumDegreeSdTheta = 0.0; dSumDegreeCdTheta = 0.0
             mp1 = m + 1
 
             @inbounds for n in max(2, m):GH.order # CAUTION: does this work for 1,1?
@@ -184,10 +173,10 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
                 c0 = pnm0[np1]*qCnm
                 s1 = pnm1[np1]*qSnm
                 c1 = pnm1[np1]*qCnm
-                sumDegreeS        += s0
-                sumDegreeC        += c0
-                dSumDegreeSdR     -= nOr*s0
-                dSumDegreeCdR     -= nOr*c0
+                sumDegreeS += s0
+                sumDegreeC += c0
+                dSumDegreeSdR -= nOr*s0
+                dSumDegreeCdR -= nOr*c0
                 dSumDegreeSdTheta += s1
                 dSumDegreeCdTheta += c1
             end

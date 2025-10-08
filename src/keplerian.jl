@@ -4,7 +4,7 @@ end
 
 Base.broadcastable(x::GravityKeplerian) = Ref(x)
 
-function GravityModel(μ::Real)
+function GravityModel(μ::T) where T
     return GravityKeplerian(μ)
 end
 
