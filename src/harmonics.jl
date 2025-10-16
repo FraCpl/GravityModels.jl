@@ -29,7 +29,7 @@ function GravityModel(coeffFile::String; order::Int64=-1)
     # Only compatible with STATIC gravity field models downloaded from
     # http://icgem.gfz-potsdam.de/home
     μ = 0.0; R = 0.0
-    C = nothing; S = nothing
+    C = zeros(1, 1); S = zeros(1, 1)
     file = open(coeffFile, "r")
     for ln in eachline(file)
         data = split(ln," "; keepempty=false)
@@ -71,7 +71,7 @@ function GravityModel(coeffFile::String; order::Int64=-1)
     # from Holmes and Featherstone paper
     # for cache efficiency, elements are stored in the same order they will be used
     # later on, i.e. from rightmost column to leftmost column
-    degree = order[1];
+    degree = order
     gnmOj = Float64[]; hnmOj = Float64[]; enm = Float64[]; # For when degree < 2
     for m in degree:-1:0
         j = 2.0 - 1.0*(m > 0)
