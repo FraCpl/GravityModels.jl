@@ -4,7 +4,7 @@ using LinearAlgebra
 
 abstract type AbstractGravity end
 
-const DATA::String = replace(pathof(GravityModels)[1:end-20], "\\" => "/")*"data/"
+const DATA::String = replace(pathof(GravityModels)[1:(end-20)], "\\" => "/")*"data/"
 const EGM2008::String = DATA*"earth/EGM2008.gfc"
 const JMM3::String = DATA*"mars/gmm3_120.sha.gfc"
 const JGMRO::String = DATA*"mars/jgmro_120f_sha.gfc"

@@ -6,10 +6,15 @@ using DelimitedFiles
 function TEST_gravity()
     # Ground truth data come from: https://icgem.gfz-potsdam.de/calcgrid
     # Functional selection: gravitation_ell, WGS84 reference system, 100x100 order/degree
-    data = readdlm(dirname(pathof(GravityModels))[1:end-3]*"test\\gravity_earth_EGM2008_100x100.gdf", skipstart=34)
+    data = readdlm(
+        dirname(pathof(GravityModels))[1:(end-3)]*"test\\gravity_earth_EGM2008_100x100.gdf",
+        skipstart = 34,
+    )
     GM = GravityModel(GravityModels.EGM2008)
 
-    errPerc = -1.0; pos = zeros(3); grav = zeros(3)
+    errPerc = -1.0;
+    pos = zeros(3);
+    grav = zeros(3)
     for r in eachrow(data)
         lond, latd, g = r
         geodetic2geocentric!(pos, latd*π/180, lond*π/180, 0.0)
