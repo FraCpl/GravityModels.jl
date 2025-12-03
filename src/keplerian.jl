@@ -16,16 +16,12 @@ end
     g[1] = c*x;
     g[2] = c*y;
     g[3] = c*z
-    return
+    return nothing
 end
 
-@inline function gravity!(
-    GH::GravityKeplerian,
-    pos::AbstractVector{T},
-    g::AbstractVector{T},
-) where {T}
+@inline function gravity!(GH::GravityKeplerian, pos::AbstractVector{T}, g::AbstractVector{T}) where {T}
     gravity!(GH.μ, pos, g)
-    return
+    return nothing
 end
 
 @inline function gravity(GH::GravityKeplerian, pos::AbstractVector{T}) where {T}
