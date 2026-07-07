@@ -9,11 +9,9 @@ struct GravityHarmonics <: AbstractGravity
     hnmOj::Vector{Float64}
     enm::Vector{Float64}
     sectorial::Vector{Float64}
-    dU::Vector{Float64}
     aOrN::Vector{Float64}
     cosλ::Vector{Float64}
     sinλ::Vector{Float64}
-    T::Matrix{Float64}
     pnm0Plus2::Vector{Float64}
     pnm0Plus1::Vector{Float64}
     pnm0::Vector{Float64}
@@ -27,9 +25,9 @@ function GravityModel(coeffFile::String; order::Int64=-1)
 
     # Only compatible with STATIC gravity field models downloaded from
     # http://icgem.gfz-potsdam.de/home
-    μ = 0.0;
+    μ = 0.0
     R = 0.0
-    C = zeros(1, 1);
+    C = zeros(1, 1)
     S = zeros(1, 1)
     file = open(coeffFile, "r")
     for ln in eachline(file)
@@ -73,9 +71,9 @@ function GravityModel(coeffFile::String; order::Int64=-1)
     # for cache efficiency, elements are stored in the same order they will be used
     # later on, i.e. from rightmost column to leftmost column
     degree = order
-    gnmOj = Float64[];
-    hnmOj = Float64[];
-    enm = Float64[]; # For when degree < 2
+    gnmOj = Float64[]
+    hnmOj = Float64[]
+    enm = Float64[]     # For when degree < 2
     for m in degree:-1:0
         j = 2.0 - 1.0*(m > 0)
         for n in max(2, m + 1):degree
@@ -109,11 +107,9 @@ function GravityModel(coeffFile::String; order::Int64=-1)
         hnmOj,
         enm,
         sectorial,
-        zeros(3),
         ones(degree+1),
         [1.0; zeros(degree)],
         zeros(degree+1),
-        zeros(3, 3),
         zeros(degree+1),
         zeros(degree+1),
         zeros(degree+1),
@@ -121,7 +117,7 @@ function GravityModel(coeffFile::String; order::Int64=-1)
     )
 end
 
-@inline scalb(x, n) = x*(2^n)
+@inline scalb(x, n) = x * exp2(n)
 
 #  gravity(GH, pos)
 #  This function computes the gravitational acceleration of a gravitational
@@ -143,16 +139,8 @@ end
 #
 # Adapted from OREKIT
 #
-function gravity(GH::GravityHarmonics, pos::AbstractVector{T}) where {T}
-    g = zero(pos)
-    gravity!(GH, pos, g)
-    return g
-end
-
-function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVector{T}) where {T}
-
+function gravity(GH::GravityHarmonics, x::T, y::T, z::T) where {T}
     # Compute polar coordinates
-    x, y, z = pos
     ρ2 = x*x + y*y
     r2 = ρ2 + z*z
     r = sqrt(r2)
@@ -161,20 +149,20 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
     u = ρ/r         # sin(theta), where theta is the polar angle
     tOu = z/max(ρ, eps(T))
 
-    createDistancePowersArray!(GH, GH.Rref/r)   # compute distance powers
-    createCosSinArrays!(GH, x/ρ, y/ρ)           # compute longitude cosines/sines
+    createDistancePowersArray!(GH, GH.Rref / r)     # compute distance powers
+    createCosSinArrays!(GH, x /ρ , y / ρ)           # compute longitude cosines/sines
 
     # outer summation over order
     index = 1
-    U = 0.0
-    fill!(GH.dU, 0.0)
+    U = zero(T)
+    dUx = zero(T); dUy = zero(T); dUz = zero(T)
     # fill!(GH.pnm0, 0.0)
     # fill!(GH.pnm1, 0.0)
     fill!(GH.pnm0Plus1, 0.0)
     fill!(GH.pnm0Plus2, 0.0)
-    pnm0 = GH.pnm0;
-    pnm1 = GH.pnm1;
-    pnm0Plus1 = GH.pnm0Plus1;
+    pnm0 = GH.pnm0
+    pnm1 = GH.pnm1
+    pnm0Plus1 = GH.pnm0Plus1
     pnm0Plus2 = GH.pnm0Plus2
     @inbounds for m in GH.order:-1:0
 
@@ -184,23 +172,23 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
         if m ≤ GH.order
             # compute contribution of current order to field (equation 5 of the paper)
             # inner summation over degree, for fixed order
-            sumDegreeS = 0.0;
+            sumDegreeS = 0.0
             sumDegreeC = 0.0
-            dSumDegreeSdR = 0.0;
+            dSumDegreeSdR = 0.0
             dSumDegreeCdR = 0.0
-            dSumDegreeSdTheta = 0.0;
+            dSumDegreeSdTheta = 0.0
             dSumDegreeCdTheta = 0.0
             mp1 = m + 1
 
             @inbounds for n in max(2, m):GH.order # CAUTION: does this work for 1,1?
                 np1 = n + 1
-                qSnm = GH.aOrN[np1]*GH.S[np1, mp1]
-                qCnm = GH.aOrN[np1]*GH.C[np1, mp1]
-                nOr = n/r
-                s0 = pnm0[np1]*qSnm
-                c0 = pnm0[np1]*qCnm
-                s1 = pnm1[np1]*qSnm
-                c1 = pnm1[np1]*qCnm
+                qSnm = GH.aOrN[np1] * GH.S[np1, mp1]
+                qCnm = GH.aOrN[np1] * GH.C[np1, mp1]
+                nOr = n / r
+                s0 = pnm0[np1] * qSnm
+                c0 = pnm0[np1] * qCnm
+                s1 = pnm1[np1] * qSnm
+                c1 = pnm1[np1] * qCnm
                 sumDegreeS += s0
                 sumDegreeC += c0
                 dSumDegreeSdR -= nOr*s0
@@ -212,10 +200,10 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
             # Contribution to outer summation over order
             sML = GH.sinλ[mp1]
             cML = GH.cosλ[mp1]
-            U = muladd(U, u, muladd(sML, sumDegreeS, cML*sumDegreeC))
-            GH.dU[1] = GH.dU[1]*u + sML*dSumDegreeSdR + cML*dSumDegreeCdR
-            GH.dU[2] = GH.dU[2]*u + sML*dSumDegreeSdTheta + cML*dSumDegreeCdTheta
-            GH.dU[3] = GH.dU[3]*u + m*(cML*sumDegreeS - sML*sumDegreeC)
+            U = muladd(U, u, muladd(sML, sumDegreeS, cML * sumDegreeC))
+            dUx = dUx * u + sML * dSumDegreeSdR + cML * dSumDegreeCdR
+            dUy = dUy * u + sML * dSumDegreeSdTheta + cML * dSumDegreeCdTheta
+            dUz = dUz * u + m * (cML * sumDegreeS - sML * sumDegreeC)
         end
 
         # Rotate the recursion arrays
@@ -225,35 +213,26 @@ function gravity!(GH::GravityHarmonics, pos::AbstractVector{T}, g::AbstractVecto
     # Scale back
     if GH.SCALING > 0
         U = scalb(U, GH.SCALING)
-        GH.dU .= scalb.(GH.dU, GH.SCALING)
+        dUx = scalb(dUx, GH.SCALING)
+        dUy = scalb(dUy, GH.SCALING)
+        dUz = scalb(dUz, GH.SCALING)
     end
 
     # apply the global mu/r factor
-    muOr = GH.μ/r
-    GH.dU[1] = GH.dU[1]*muOr - U*muOr/r
-    GH.dU[2] *= -muOr
-    GH.dU[3] *= muOr
+    muOr = GH.μ / r
+    dUx = dUx * muOr - U * muOr / r
+    dUy *= -muOr
+    dUz *= muOr
 
-    # Convert Gradient from Spherical to Cartesian Coordinates
-    rI = x/r;
-    rJ = y/r
-    coeff11 = -GH.μ/(r2*r)*GH.C[1, 1]
-    GH.T[1, 1] = rI;
-    GH.T[1, 2] = -rI*t/ρ;
-    GH.T[1, 3] = -rJ*r/ρ2
-    GH.T[2, 1] = rJ;
-    GH.T[2, 2] = -rJ*t/ρ;
-    GH.T[2, 3] = rI*r/ρ2
-    GH.T[3, 1] = t;
-    GH.T[3, 2] = ρ/r2
-    mul!(g, GH.T, GH.dU)
+    # Convert Gradient from Spherical to Cartesian Coordinates and add C[1, 1] term
+    rI = x / r
+    rJ = y / r
+    c11 = -GH.μ / (r2 * r) * GH.C[1, 1]
+    gx = rI * dUx - rI * t / ρ * dUy - rJ * r / ρ2 * dUz + c11 * x
+    gy = rJ * dUx - rJ * t / ρ * dUy + rI * r / ρ2 * dUz + c11 * y
+    gz = t * dUx + ρ / r2 * dUy + c11 * z
 
-    # Add 2-body term (C(1,1) added for compatibility with magnetic field model)
-    @inbounds for k in eachindex(g)
-        ;
-        g[k] += coeff11*pos[k];
-    end
-    return nothing
+    return gx, gy, gz
 end
 
 # This function computes normalized associated legendre functions
@@ -269,17 +248,17 @@ function computeTesseral!(GH::GravityHarmonics, m, index, t, u, tOu, pnm0, pnm1,
 
     # compute tesseral values
     localIndex = index
-    u2 = u*u
+    u2 = u * u
     @inbounds for k in (n + 1):(GH.order + 1)
         # value (equation 27 of the paper)
-        pnm0[k] = GH.gnmOj[localIndex]*t*pnm0Plus1[k] - GH.hnmOj[localIndex]*u2*pnm0Plus2[k]
+        pnm0[k] = GH.gnmOj[localIndex] * t * pnm0Plus1[k] - GH.hnmOj[localIndex] * u2 * pnm0Plus2[k]
         localIndex += 1
     end
 
     # initialize recursion from sectorial terms
     n = nmax
     if n == m
-        @inbounds pnm1[n + 1] = m*tOu*pnm0[n + 1]
+        @inbounds pnm1[n + 1] = m * tOu * pnm0[n + 1]
         n += 1
     end
 
@@ -287,7 +266,7 @@ function computeTesseral!(GH::GravityHarmonics, m, index, t, u, tOu, pnm0, pnm1,
     localIndex = index
     @inbounds for k in (n + 1):(GH.order + 1)
         # first derivative (equation 30 of the paper)
-        pnm1[k] = m*tOu*pnm0[k] - GH.enm[localIndex]*u*pnm0Plus1[k]
+        pnm1[k] = m * tOu * pnm0[k] - GH.enm[localIndex] * u * pnm0Plus1[k]
         localIndex += 1
     end
     return localIndex
@@ -302,7 +281,7 @@ end
         @inbounds for n in 2:GH.order
             p = fld(n, 2) + 1
             q = n - p + 2
-            GH.aOrN[n + 1] = GH.aOrN[p]*GH.aOrN[q]
+            GH.aOrN[n + 1] = GH.aOrN[p] * GH.aOrN[q]
         end
     end
     return nothing
@@ -326,8 +305,8 @@ end
             p = fld(m, 2) + 1
             q = m - p + 2
 
-            GH.cosλ[m + 1] = GH.cosλ[p]*GH.cosλ[q] - GH.sinλ[p]*GH.sinλ[q]
-            GH.sinλ[m + 1] = GH.sinλ[p]*GH.cosλ[q] + GH.cosλ[p]*GH.sinλ[q]
+            GH.cosλ[m + 1] = GH.cosλ[p] * GH.cosλ[q] - GH.sinλ[p] * GH.sinλ[q]
+            GH.sinλ[m + 1] = GH.sinλ[p] * GH.cosλ[q] + GH.cosλ[p] * GH.sinλ[q]
         end
     end
     return nothing

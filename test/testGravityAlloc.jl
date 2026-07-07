@@ -4,11 +4,12 @@ using LinearAlgebra
 
 function gr()
     GM = GravityModel(dirname(pathof(GravityModels))[1:(end - 3)]*"data\\earth\\EGM2008.gfc")
-    p = [6700e3*normalize(randn(3)) for _ in 1:10000]
+    x, y, z = 6700e3*normalize(randn(3))
+    p = [x; y; z]
     g = zero(p)
 
-    # @profview gravity!.(GM, p, g)
-    @btime gravity!.($GM, $p, $g)
+    @btime gravity($GM, $x, $y, $z)
+    @btime gravity!($GM, $p, $g)
     return nothing
 end
 

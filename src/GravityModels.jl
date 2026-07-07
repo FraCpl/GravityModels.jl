@@ -10,9 +10,10 @@ const JMM3::String = DATA*"mars/gmm3_120.sha.gfc"
 const JGMRO::String = DATA*"mars/jgmro_120f_sha.gfc"
 const GL0660B::String = DATA*"moon/GL0660B.gfc"
 
-export GravityModel, gravity, gravity!
+export GravityModel, gravity, gravity!, gravityThirdBody!
 include("keplerian.jl")
 include("harmonics.jl")
+include("common.jl")
 
 export geodetic2geocentric, geodetic2geocentric!, gravityMap
 include("utils.jl")
