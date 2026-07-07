@@ -1,3 +1,3 @@
 var documenterSearchIndex = {"docs":
-[{"location":"#GravityModels","page":"Home","title":"GravityModels","text":"Documentation for GravityModels.\n\n","category":"section"}]
+[{"category":"section","location":"#GravityModels","page":"Home","text":"Documentation for GravityModels.\n\n","title":"GravityModels"}]
 }
