@@ -1,8 +1,7 @@
 function gravity(GH::G, pos::AbstractVector{T}) where {T, G<:AbstractGravity}
-    g = zero(pos)
     x, y, z = pos
-    g[1], g[2], g[3] = gravity(GH, x, y, z)
-    return g
+    gx, gy, gz = gravity(GH, x, y, z)
+    return [gx; gy; gz]
 end
 
 function gravity!(GH::G, pos::AbstractVector{T}, g::AbstractVector{T}) where {T, G<:AbstractGravity}

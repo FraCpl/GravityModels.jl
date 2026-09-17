@@ -18,6 +18,7 @@ function TEST_gravity()
         gravity!(GM, pos, grav)
         errPerc = max(errPerc, abs(1.0 - norm(grav)/(1e-5g)))
     end
+    @show errPerc
 
     return errPerc
 end
