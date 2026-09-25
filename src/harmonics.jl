@@ -1,14 +1,19 @@
 struct GravityHarmonics <: AbstractGravity
+    # Model parameters
     μ::Float64
     order::Int
     Rref::Float64
+    SCALING::Float64
     S::Matrix{Float64}
     C::Matrix{Float64}
-    SCALING::Float64
+
+    # Precomputed variables
     gnmOj::Vector{Float64}
     hnmOj::Vector{Float64}
     enm::Vector{Float64}
     sectorial::Vector{Float64}
+
+    # Allocations
     aOrN::Vector{Float64}
     cosλ::Vector{Float64}
     sinλ::Vector{Float64}
@@ -101,10 +106,30 @@ function GravityModel(coeffFile::String; order::Int64=-1, SCALING=0.0)
     end
 
     cosλ = zeros(degree+1); cosλ[1] = 1.0
-    return GravityHarmonics(μ, order, R, S, C, SCALING, gnmOj, hnmOj, enm, sectorial,
+    return GravityHarmonics(μ, order, R, SCALING, S, C, gnmOj, hnmOj, enm, sectorial,
         ones(degree+1), cosλ, zeros(degree+1), zeros(degree+1), zeros(degree+1),
         zeros(degree+1), zeros(degree+1))
 end
+
+Base.copy(g::GravityHarmonics) = GravityHarmonics(
+    g.μ,
+    g.order,
+    g.Rref,
+    g.SCALING,
+    copy(g.S),
+    copy(g.C),
+    copy(g.gnmOj),
+    copy(g.hnmOj),
+    copy(g.enm),
+    copy(g.sectorial),
+    copy(g.aOrN),
+    copy(g.cosλ),
+    copy(g.sinλ),
+    copy(g.pnm0Plus2),
+    copy(g.pnm0Plus1),
+    copy(g.pnm0),
+    copy(g.pnm1),
+)
 
 @inline scalb(x, n) = x * exp2(n)
 
@@ -187,14 +212,12 @@ function gravity(GH::GravityHarmonics, x::T, y::T, z::T) where {T}
             nOr = n / r
             s0 = pnm0[np1] * qSnm
             c0 = pnm0[np1] * qCnm
-            s1 = pnm1[np1] * qSnm
-            c1 = pnm1[np1] * qCnm
             sumDegreeS += s0
             sumDegreeC += c0
             dSumDegreeSdR -= nOr * s0
             dSumDegreeCdR -= nOr * c0
-            dSumDegreeSdTheta += s1
-            dSumDegreeCdTheta += c1
+            dSumDegreeSdTheta += pnm1[np1] * qSnm
+            dSumDegreeCdTheta += pnm1[np1] * qCnm
         end
 
         # Contribution to outer summation over order
@@ -226,10 +249,10 @@ function gravity(GH::GravityHarmonics, x::T, y::T, z::T) where {T}
     # Convert Gradient from Spherical to Cartesian Coordinates and add C[1, 1] = C₀₀ term
     rI = x / r
     rJ = y / r
-    c11 = -μ / (r2 * r)# * C[1, 1]      # By construction C[1, 1] = 1
-    gx = rI * dUx - rI * t / ρ * dUy - rJ * r / ρ2 * dUz + c11 * x
-    gy = rJ * dUx - rJ * t / ρ * dUy + rI * r / ρ2 * dUz + c11 * y
-    gz = t * dUx + ρ / r2 * dUy + c11 * z
+    c00 = -μ / (r2 * r)# * C[1, 1]      # By construction C[1, 1] = 1
+    gx = rI * dUx - rI * t / ρ * dUy - rJ * r / ρ2 * dUz + c00 * x
+    gy = rJ * dUx - rJ * t / ρ * dUy + rI * r / ρ2 * dUz + c00 * y
+    gz = t * dUx + ρ / r2 * dUy + c00 * z
 
     return gx, gy, gz
 end
